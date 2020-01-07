@@ -12,7 +12,6 @@ void entryPoint(Project proj, ModuleContext context, Window window) {
 
     Rot q;
     float t = 0;
-    vec3 c = vec3(0.9,0.8,0.4);
     
     with (context()) {
         when(Frame).then({
@@ -347,11 +346,9 @@ vec3 getSaucerColor(vec3 p, vec3 vec) {
 
 void main() {
 
-  vec3 eye = vec3(0,0,-30);
+  vec3 eye = vec3(0,0,-15);
   eye = (uni.rot * vec4(eye,0)).xyz;
-  vec3 ray = vec3(tc, sqrt(2) * tan(fov));
-  const float angle = 1.5;
-  ray = vec3(sin(tc * angle), length(cos(tc * angle)));
+  vec3 ray = vec3(tc * 2 * tan(fov/2), 1);
   ray = (uni.rot * vec4(ray,0)).xyz;
   ray = normalize(ray);
   vec3 current = rayMarch(eye, ray);
