@@ -3,7 +3,7 @@ import sbylib;
 import frag;
 import rot;
 
-mixin(Register!entryPoint);
+// mixin(Register!entryPoint);
 void entryPoint(Project proj, ModuleContext context, Window window) {
     auto bolt = Bolt.create(window);
     context.pushResource(bolt);
