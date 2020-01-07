@@ -3,11 +3,11 @@ import sbylib;
 import frag;
 import rot;
 
-// mixin(Register!entryPoint);
+mixin(Register!entryPoint);
 void entryPoint(Project proj, ModuleContext context, Window window) {
     auto tex = new FileTexture("resource/spheremap.jpg");
     context.pushResource(tex);
-    auto bolt = Katori.create(window, tex);
+    auto bolt = Basami.create(window, tex);
     context.pushResource(bolt);
 
     Rot q;
@@ -94,15 +94,6 @@ float smin(float a, float b, float k) {
   return -log(res) / k;
 }
 
-float length8(vec2 p) {
-  float x = 1, y = 1;
-  for (int i = 0; i < 8; i++) {
-    x *= p.x;
-    y *= p.y;
-  }
-  return pow(x + y, 1.0 / 8);
-}
-
 vec3 translate(vec3 p, vec3 t) {
   return p - t;
 }
@@ -123,63 +114,105 @@ vec3 scale(vec3 p, vec3 s) {
   return p / s;
 }
 
-vec3 fireEnd(float t) {
-  float n = floor((20 - t * 0.01) / (2 * pi));
-  float angle = 20 - t * 0.01 - n * 2 * pi;
-  float len = angle * 0.48 + 3 * n + 1;
-  return vec3(sin(angle) * len, 0, cos(angle) * len);
-}
-
-float fire(vec3 p) {
-  p = translate(p, fireEnd(uni.time) + vec3(0,5,0));
-  p = scale(p, vec3(2,8,2)*4);
-  vec2 d = abs(vec2(length(p.xz),p.y)) - 1;
-  return min(max(d.x,d.y),0.0) + length(max(d,0.0));
-}
-
-float body(vec3 p) {
-  p = translate(p, vec3(0.4,3,0));
-  float sub = p.y + 0.0;
-  float len = length(p.xz);
-  float angle = atan(p.x, p.z);
-  if (angle < 0) angle += 2 * pi;
-  if (angle > 2 * pi) angle -= 2 * pi;
-  float n = floor((len - angle * 0.48+1) / 3 - 0.2);
-  float t = angle + n * 2 * pi;
-  if (t > 20 - uni.time * 0.01) return 1;
-  vec2 q = vec2(mod(len - angle * 0.48, 3)-1, p.y);
-  float result = length8(q) - 0.5;
-  result = max(result, sub);
-  //result -= noise(p * 300) * 0.01;
+float poll(vec3 p) {
+  p = scale(p, vec3(1.2, 1.5, 1));
+  p = translate(p, vec3(-0.5,0.3,0));
+  vec2 d = abs(vec2(length(p.xy), p.z)) - 1;
+  float result = min(max(d.x, d.y), 0) + length(max(d, 0));
+  result = max(result, -p.y);
   return result;
 }
 
-float distSaucer(vec3 p) {
-  p = translate(p,vec3(0,-3,0));
-  vec2 q = abs(vec2(length(p.zx), p.y / 20)) - 0.3;
-  float bar = min(max(q.x,q.y),0) + length(max(q,0));
-  q = vec2(length(p.xz) - 10, p.y + 1.0);
-  float torus = length(q) - 0.2;
-  float bottom2 = max(max(-p.y-3.9, p.y + 3.5), length(p-vec3(0,-2,0)) - 10);
-  p = translate(p, vec3(0,-1,0));
-  p = scale(p, vec3(1,30,1));
-  q = vec2(length(p.xz) - 10, p.y);
-  float result = length8(q) - 0.1;
-  result = min(result, bottom2);
-  result = min(result, torus);
-  result = min(result, bar);
+float poll2(vec3 p) {
+  p = translate(p, vec3(-4.2,1.5,0));
+  p = rotate(p, vec3(0,0,1), 20);
+  p = scale(p, vec3(2, 1.5, 15));
+  vec2 d = abs(vec2(length(p.xy), p.z)) - 1;
+  float result = min(max(d.x, d.y), 0) + length(max(d, 0));
+  return result;
+}
+
+float body(vec3 p) {
+  float sub3 = p.y + 0.5;
+  const float freq = 0.1;
+  float triWave = (1 - abs(mod(p.x*10,2)-1)) * 0.2;
+  vec3 n = normalize(vec3(-0.3, 1, 0));
+  float sub2 = dot(p - vec3(-4.2, 1.2, 0) - n * triWave, normalize(-n));
+  p = translate(p, vec3(10 / 18. + 0.3, 0,0));
+  float result = length(max(abs(p) - vec3(10,1,1), 0.0f));
+  float sub = dot(p - vec3(0,0.5,0), normalize(vec3(0.15,1,0)));
+  result = max(result, sub);
+  result = max(result, -sub2);
+  result = max(result, -sub3);
+  return result;
+}
+
+float ringOnly(vec3 p) {
+  float rate = 1 + (sin(uni.time /10) + 1) * 0.05;
+  p = scale(p, vec3(rate,1,rate));
+  vec2 q = vec2(length(p.xy) - 4, p.z);
+  float result = length(q) - 0.3;
+  return result;
+}
+
+float ball(vec3 p) {
+  p = scale(p, vec3(0.5,0.5,10) );
+//  p = translate(p, vec3(0,-7,0));
+  return length(p) - 1;
+}
+
+float side(vec3 p) {
+  float sub3 = length(p - vec3(0,-4,0)) - 1.2;
+  p = scale(p, vec3(0.65, 1,1));
+  p.x = abs(p.x);
+  p = translate(p, vec3(1.2,0,0));
+  p = rotate(p, vec3(0,0,1), 74 + 8 * (sin(uni.time / 10) + 1));
+  //p = rotate(p, vec3(0,0,1), 76);
+  p = translate(p, vec3(0.5, -1.4, 0));
+  float sub2 = poll2(p);
+  float result = body(p);
+  result = smin(result, poll(p), 4);
+  result = max(result, abs(p.z) - 1);
+  result -= 0.5;
+  result = max(result, -sub2);
+  result = max(result, -sub3);
+  return result;
+}
+
+float ring(vec3 p) {
+  float sub3 = length(p - vec3(0,-4,0)) - 1.2;
+  float r = ringOnly(p);
+  p = scale(p, vec3(0.65, 1,1));
+  p.x = abs(p.x);
+  p = translate(p, vec3(1.2,0,0));
+  p = rotate(p, vec3(0,0,1), 74 + 8 * (sin(uni.time / 10) + 1));
+  //p = rotate(p, vec3(0,0,1), 76);
+  p = translate(p, vec3(0.5, -1.4, 0));
+  float sub2 = poll2(p);
+  float result = r;
+  result = max(result, -sub2);
+  result = max(result, -sub3);
   return result;
 }
 
 float dist(vec3 p) {
-//  return body(p);
-  return min(body(p), distSaucer(p));
+//  float py = p.y+8;
+//  p.x+=(1-1/pow(py*py+1,0.4))*pow(py,1.8)*0.05*sin(uni.time/2);
+//  p.z+=(1-1/pow(py*py+1,0.4))*pow(py,1.8)*0.05*sin(uni.time/1.34235324);
+//  float result = side(p);
+//  result = min(result, ring(p));
+//  return result-0.5-0.1*sin(uni.time*0.2)*pow((sin(p.x*4)+sin(p.y*4)+sin(p.z*4)),2);
+//  return result;
+  float result = side(p);
+  result = min(result, ring(p));
+//  return result-0.2-0.08*(sin(uni.time/3+p.x*p.x*0.4)+sin(20 * uni.time/3+p.y*p.y*0.10)+sin(uni.time/3+p.z*p.z*0.3));
+  return result;
 }
 
 int getNearestIndex(vec3 p) {
-  float minDist = body(p);
+  float minDist = side(p);
   int idx = 0;
-  float d = distSaucer(p);
+  float d = ring(p);
   if (d < minDist) {
     minDist = d;
     idx = 1;
@@ -198,20 +231,8 @@ vec3 getNormal(vec3 p) {
 
 vec3 rayMarch(vec3 eye, vec3 ray) {
   vec3 current = eye;
-  for (int i = 0; i < 500; i++) {
+  for (int i = 0; i < 200; i++) {
     float d = dist(current);
-    current += ray * d;
-    if (abs(d) < eps) {
-      break;
-    }
-  }
-  return current;
-}
-
-vec3 rayMarchFire(vec3 eye, vec3 ray) {
-  vec3 current = eye;
-  for (int i = 0; i < 500; i++) {
-    float d = fire(current);
     current += ray * d;
     if (abs(d) < eps) {
       break;
@@ -274,80 +295,9 @@ vec2 cubeMap(vec3 current, vec3 vec) {
   return result  / (2 * size) + 1;
 }
 
-vec3 getKatoriColor(vec3 p, vec3 vec) {
-  vec3 n = getNormal(p);
-  float diffuse = max(0,dot(-vec, n));
-  vec3 difColor = vec3(0,0.5,0.3) * 0.8;
-  float len = length((p - fireEnd(uni.time)).xz);
-  vec3 gray = vec3(0.7);
-  vec3 red = vec3(0.4,0,0);
-  vec3 black = vec3(0);
-  if (len < 0.7) {
-    difColor = gray;
-  } else if (len < 0.85) {
-    float t = (len - 0.7) / 0.15;
-    difColor = gray * (1-t) + red * t;
-  } else if (len < 0.95) {
-    difColor = red;
-  } else if (len < 1.1) {
-    float t = (len - 0.95) / 0.15;
-    difColor = red * (1-t) + black * t;
-  } else if (len < 1.2) {
-    difColor = black;
-  }
-  return difColor * diffuse;
-}
-
-float getShadow(vec3 p, vec3 vec) {
-  float minDist = 114514;
-  float all = 0;
-  for (int i = 0; i < 100; i++) {
-    float d = body(p);
-    if (abs(d) < eps) {
-      return 0.5;
-    }
-    minDist = min(minDist, abs(d) * 16 / all);
-    p += vec * d;
-    all += d;
-  }
-  return 0.5 + 0.5 * minDist;
-}
-
-vec3 getSaucerColor(vec3 p, vec3 vec) {
-  vec3 lightPos = vec3(4,30,2);
-  float s = getShadow(lightPos, normalize(p - lightPos));
-  float diffuse = max(0,dot(-vec, getNormal(p)));
-  vec = reflect(vec, getNormal(p));
-  p += vec;
-  int idx = 1;
-  for (int j = 0; j < 3; j++) {
-    p = rayMarch(p, vec);
-    if (abs(dist(p)) > eps) break;
-    if (getNearestIndex(p) == 0) {
-      idx = 0;
-      break;
-    }
-    vec = reflect(vec, getNormal(p));
-  }
-  vec3 reflectColor;
-  switch (idx) {
-    case 0:
-      reflectColor = getKatoriColor(p, vec);
-      break;
-    case 1:
-      reflectColor = texture(mTexture, cubeMap(p, reflect(vec, getNormal(p)))).rgb;
-      break;
-  }
-
-  float refRate = 0.2;
-  vec3 result = reflectColor * refRate + vec3(1) * (1-refRate) * diffuse;
-  result *= 1 - s;
-  return result;
-}
 
 void main() {
-
-  vec3 eye = vec3(0,0,-30);
+  vec3 eye = vec3(0,0,-20);
   eye = (uni.rot * vec4(eye,0)).xyz;
   vec3 ray = vec3(tc, sqrt(2) * tan(fov));
   const float angle = 1.5;
@@ -359,35 +309,36 @@ void main() {
   vec3 lightPos = vec3(1,1,-1) * 10;
 
   if (abs(dist(current)) < eps) {
+    vec3 n = getNormal(current);
+    vec3 eyeVec = normalize(eye - current);
+    vec3 lightVec = normalize(lightPos - current);
+    vec3 refVec = reflect(-lightVec, n);
+    float diffuse = max(0,dot(eyeVec, n));
+    float spec = max(0,dot(eyeVec, refVec));
+    vec4 reflectColor = texture(mTexture, cubeMap(current, reflect(-eyeVec, n)));
     switch (getNearestIndex(current)) {
       case 0:
-        FragColor.rgb = getKatoriColor(current, normalize(current - eye));
+        float refRate = 0.05;
+        FragColor = vec4(0.9,0.7,0.7,1) * diffuse;
+        FragColor = FragColor * (1-refRate) + reflectColor * refRate;
+        FragColor += pow(spec, 5) * 0.2;
         break;
       case 1:
-        FragColor.rgb = getSaucerColor(current, normalize(current - eye));
+        FragColor = reflectColor * 0.2 + vec4(0.5, 0.5 ,0.5, 1) * 0.8;
+        FragColor *= diffuse;
+        FragColor += pow(spec, 5);
+        break;
+      case 2:
+        FragColor = vec4(0,0,0,1) * diffuse;
         break;
       default:
-        FragColor.rgb = vec3(1);
+        FragColor = vec4(0,0,1,1);
         break;
     }
   } else {
-    FragColor.rgb = vec3(0);
+    FragColor = vec4(0.25);
+    FragColor.a = 1;
   }
-  FragColor.a = 1;
- 
-  current = rayMarchFire(eye, ray);
-  float t = 0;
-  vec3 firePos = fireEnd(uni.time+5);
-  for (int i = 0; i < 20; i++) {
-    if (current.y < 2.5) continue;
-    float noiseValue = noise((current-firePos) * 300 - uni.time * 20);
-    noiseValue *= 1 - length((current-firePos).xz) * 3 ;
-    noiseValue = clamp(noiseValue, 0, 1);
-    noiseValue = pow(noiseValue, 2);
-    t += noiseValue * 0.1;
-    current += ray * 0.5;
-  }
-  FragColor.rgb += t * vec3(0.8) * 10;
 }
 };
 
@@ -397,4 +348,4 @@ align(16):
     mat4 rot;
 }
 
-alias Katori = FragmentCanvas!(fragmentSource, Uniform, 1);
+alias Basami = FragmentCanvas!(fragmentSource, Uniform, 1);
