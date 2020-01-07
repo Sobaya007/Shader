@@ -1,9 +1,9 @@
 import std;
 import erupted;
 import sbylib;
-import sbylib.graphics : DefineMaterial = Material;
+import sbylib.graphics : DefineMaterial = Material, Texture;
 
-class FragmentMaterial(alias fragSource, FragmentUniform) {
+class FragmentMaterial(alias fragSource, FragmentUniform, uint TextureNum) {
 
     enum MaxObjects = 10;
 
@@ -103,12 +103,17 @@ class FragmentMaterial(alias fragSource, FragmentUniform) {
         mixin UseVertex!(Vertex);
         mixin UseIndex!(uint);
         @binding(0) mixin UseFragmentUniform!(FragmentUniform);
-        // @type(DescriptorType.CombinedImageSampler) @stage(ShaderStage.Fragment) @binding(1) Texture texture;
+        static foreach (i; 1..TextureNum+1) {
+            @type(DescriptorType.CombinedImageSampler) @stage(ShaderStage.Fragment) @binding(i) Texture texture;
+        }
         mixin ImplDescriptorSet;
         mixin ImplReleaseOwn;
         mixin ImplRecord;
 
-        this(Geometry)(Geometry geom, DescriptorPool descriptorPool, DescriptorSetLayout descriptorSetLayout) {
+        this(Geometry, Args...)(Geometry geom, DescriptorPool descriptorPool, DescriptorSetLayout descriptorSetLayout, Args args) {
+            static foreach (i; 0..Args.length) {
+                texture = args[i];
+            }
             initializeVertexBuffer(geom);
             initializeIndexBuffer(geom);
             initializeFragmentUniform();
@@ -116,12 +121,12 @@ class FragmentMaterial(alias fragSource, FragmentUniform) {
         } }
 }
 
-class FragmentCanvas(alias fragSource, FragmentUniform) {
+class FragmentCanvas(alias fragSource, FragmentUniform, uint TextureNum = 0) {
     mixin ImplPos;
     mixin ImplWorldMatrix;
-    mixin UseMaterial!(FragmentMaterial!(fragSource, FragmentUniform));
+    mixin UseMaterial!(FragmentMaterial!(fragSource, FragmentUniform, TextureNum));
 
-    static create(Window window) {
-        return new typeof(this)(window, GeometryLibrary().buildPlane());
+    static create(Args...)(Window window, Args args) {
+        return new typeof(this)(window, GeometryLibrary().buildPlane(), args);
     }
 }

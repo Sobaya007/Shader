@@ -18,7 +18,6 @@ void entryPoint(Project proj, ModuleContext context, Window window) {
             s = 1 - exp(-s * 0.01);
             with (bolt.fragmentUniform) {
                 rot = q.toMatrix4;
-                time = vec2(t, 1);
                 lightColor = c * s;
             }
             t++;
@@ -49,7 +48,6 @@ const vec3 center = vec3(0,3.6,0);
 const vec3 ambientColor = vec3(0.04);
 
 layout(binding=0) uniform UniformData {
-    vec2 time;
     mat4 rot;
     vec3 lightColor;
 } uni;
@@ -58,45 +56,6 @@ layout(binding=0) uniform UniformData {
 float po(vec3 start, vec3 ray, vec3 point) {
   ray = normalize(ray);
   return length(dot(point-start, ray) * ray + start - point);
-}
-
-float rand(vec3 p) {
-  return fract(sin(dot(p, vec3(12.9898, 78.233, 114514.1919810))) * 43758.5453);
-}
-
-float interpolate(float x, float y, float t) {
-  t = t * t * (3 - 2 * t);
-  return x * (1-t) + y * t;
-}
-
-float irand(vec3 p) {
-  vec3 i = floor(p);
-  vec3 f = fract(p);
-  float rand1 = rand(i);
-  float rand2 = rand(i+vec3(1,0,0));
-  float rand3 = rand(i+vec3(0,0,1));
-  float rand4 = rand(i+vec3(1,0,1));
-  float rand5 = rand(i+vec3(0,1,0));
-  float rand6 = rand(i+vec3(1,1,0));
-  float rand7 = rand(i+vec3(0,1,1));
-  float rand8 = rand(i+vec3(1,1,1));
-  float t1 = interpolate(rand1, rand2, f.x);
-  float t2 = interpolate(rand3, rand4, f.x);
-  float t3 = interpolate(rand5, rand6, f.x);
-  float t4 = interpolate(rand7, rand8, f.x);
-  float s1 = interpolate(t1, t2, f.z);
-  float s2 = interpolate(t3, t4, f.z);
-  return interpolate(s1, s2, f.y);
-}
-
-float noise(vec3 p) {
-  float t = 0;
-  for (int i = 0; i < 8; i++) {
-    float freq = pow(2, float(i));
-    float amp = pow(0.5, float(8-i));
-    t += irand(p / freq) * amp;
-  }
-  return t;
 }
 
 float smin(float a, float b, float k) {
@@ -471,7 +430,6 @@ void main() {
 
 struct Uniform {
 align(16):
-    vec2 time;
     mat4 rot;
     vec3 lightColor;
 }
