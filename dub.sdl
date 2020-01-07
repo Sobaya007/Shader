@@ -1,0 +1,6 @@
+name "shader2"
+description "Art garally with ray marching"
+authors "sobaya"
+copyright "Copyright © 2020, sobaya"
+license "MIT"
+dependency "sbylib" version="~>0.0.4"

@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/shader2
+shader2.so
+shader2.dylib
+shader2.dll
+shader2.a
+shader2.lib
+shader2-test-*
+*.exe
+*.o
+*.obj
+*.lst
+.cache
