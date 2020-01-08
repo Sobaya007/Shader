@@ -311,30 +311,30 @@ void main() {
     vec3 refVec = reflect(-lightVec, n);
     float diffuse = max(0,dot(eyeVec, n));
     float spec = max(0,dot(eyeVec, refVec));
-    vec4 reflectColor = texture(mTexture, cubeMap(current, reflect(-eyeVec, n)));
+    vec3 reflectColor = texture(mTexture, cubeMap(current, reflect(-eyeVec, n))).rgb;
     switch (getNearestIndex(current)) {
       case 0:
         float refRate = 0.05;
-        FragColor = vec4(0.9,0.7,0.7,1) * diffuse;
-        FragColor = FragColor * (1-refRate) + reflectColor * refRate;
-        FragColor += pow(spec, 5) * 0.2;
+        FragColor.rgb = vec3(0.9,0.7,0.7) * diffuse;
+        FragColor.rgb = mix(FragColor.rgb, reflectColor, refRate);
+        FragColor.rgb += pow(spec, 5) * 0.2;
         break;
       case 1:
-        FragColor = reflectColor * 0.2 + vec4(0.5, 0.5 ,0.5, 1) * 0.8;
-        FragColor *= diffuse;
-        FragColor += pow(spec, 5);
+        FragColor.rgb = reflectColor * 0.2 + vec3(0.5) * 0.8;
+        FragColor.rgb *= diffuse;
+        FragColor.rgb += pow(spec, 5);
         break;
       case 2:
-        FragColor = vec4(0,0,0,1) * diffuse;
+        FragColor.rgb = vec3(0);
         break;
       default:
-        FragColor = vec4(0,0,1,1);
+        FragColor.rgb = vec3(0,0,1);
         break;
     }
   } else {
-    FragColor = vec4(0.25);
-    FragColor.a = 1;
+    FragColor.rgb = vec3(0.25);
   }
+  FragColor.a = 1;
 }
 };
 

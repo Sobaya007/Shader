@@ -235,10 +235,10 @@ void main() {
       case 1:
       case 3:
       case 4:
-        FragColor = vec4(0,0,0,1);
+        FragColor.rgb = vec3(0);
         break;
       case 0:
-        FragColor = vec4(0.9);
+        FragColor.rgb = vec3(0.9);
         vec3 lightVec = normalize(uni.lightPos - current);
         vec3 viewVec = normalize(eye - current);
         vec3 normal = getNormal(current);
@@ -252,30 +252,30 @@ void main() {
         current.xy = abs(current.xy);
         if (current.z > -1.7) break;
         if (1.7 < current.x && current.x < 1.8)
-          FragColor = vec4(0,0,0,1);
+          FragColor.rgb = vec3(0);
         if (current.x < 1.8 && 1.2 < current.y && current.y < 1.5)
-          FragColor = vec4(0,0,0,1);
+          FragColor.rgb = vec3(0);
         break;
       case 5:
-        FragColor = vec4(0);
+        FragColor.rgb = vec3(0);
         drawBackground(eye, ray);
-        FragColor /= 2;
-        FragColor += vec4(0.43, 0.1, 0.08, 1);
+        FragColor.rgb /= 2;
+        FragColor.rgb += vec3(0.43, 0.1, 0.08);
         ray = normalize(current - uni.lightPos);
         current = rayMarch(uni.lightPos, ray);
         if (getNearestIndex(current) != 5) {
-          FragColor *= 0.5;
+          FragColor.rgb *= 0.5;
         }
         break;
       default:
-        FragColor = vec4(0.9);
+        FragColor.rgb = vec3(0.9);
         break;
     }
   } else {
-    FragColor = vec4(0.25);
-    FragColor.a = 1;
+    FragColor.rgb = vec3(0.25);
     drawBackground(eye, ray);
   }
+  FragColor.a = 1;
 }
 };
 

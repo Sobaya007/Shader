@@ -14,6 +14,7 @@ void main() {
         window = buildWindow();
     }
     enforce(GLFW.hasVulkanSupport());
+
     VulkanContext.initialize("example app", VK_MAKE_VERSION(0,0,1), window);
     scope (exit) VulkanContext.deinitialize();
 

@@ -396,30 +396,28 @@ void main() {
     vec3 n = getNormal(current);
     vec3 eyeVec = normalize(eye - current);
     float diffuse = max(0,dot(eyeVec, n));
-    float spec;
     float light = 0;
     switch (getNearestIndex(current)) {
       case 0:
-        FragColor = vec4(getHeadColor(eye, ray), 1);
+        FragColor.rgb = getHeadColor(eye, ray);
         break;
       case 1:
-        FragColor = vec4(getMetalColor(eye, ray), 1);
+        FragColor.rgb = getMetalColor(eye, ray);
         break;
       case 2:
-        FragColor = vec4(0,0,0,1) * diffuse + vec4(ambientColor,1);
-        FragColor += vec4(1) * spec;
+        FragColor.rgb = ambientColor;
         break;
       case 3:
-        FragColor = vec4(getWallColor(eye, ray), 1);
+        FragColor.rgb = getWallColor(eye, ray);
         break;
       default:
-        FragColor = vec4(0,0,1,1);
+        FragColor.rgb = vec3(0,0,1);
         break;
     }
   } else {
     FragColor.rgb = vec3(0);
-    FragColor.a = 1;
   }
+  FragColor.a = 1;
 }
 };
 
