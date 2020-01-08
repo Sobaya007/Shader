@@ -2,9 +2,12 @@ import std : exp, writeln;
 import sbylib;
 import frag;
 import rot;
+import util;
 
-// mixin(Register!entryPoint);
-void entryPoint(Project proj, ModuleContext context, Window window) {
+mixin(Register!entryPoint);
+
+@depends("root")
+void entryPoint(ModuleContext context, Window window, ModuleContext[string] contexts) {
     auto bolt = Bolt.create(window);
     context.pushResource(bolt);
 
@@ -23,14 +26,13 @@ void entryPoint(Project proj, ModuleContext context, Window window) {
             t++;
         });
 
-        when(KeyButton.KeyR.pressed.on(window)).then({
-            proj.reloadAll();
-        });
         when(KeyButton.KeyT.pressed.on(window)).then({
             t = 0;
         });
+        handleContext(context, bolt);
         q.registerEvent(window);
     }
+    contexts[getModuleName()] = context;
 }
 
 enum fragmentSource = q{
@@ -51,7 +53,6 @@ layout(binding=0) uniform UniformData {
     mat4 rot;
     vec3 lightColor;
 } uni;
-// layout(binding=1) uniform sampler2D mTexture;
 
 float po(vec3 start, vec3 ray, vec3 point) {
   ray = normalize(ray);
@@ -93,7 +94,6 @@ float head(vec3 p) {
 float spring(vec3 p) {
   const float r = 0.3;
   const float R = 2.5;
-  //p.y += 2;
   float sub = p.y - 1;
   float sub2 = -(p.y + 4);
   float angle = atan(p.x, p.z);
@@ -270,10 +270,8 @@ vec2 cubeMap(vec3 current, vec3 vec) {
 vec3 skyMap(vec3 vec) {
   float t = atan(vec.z, vec.x);
   float p = asin(vec.y);
-//  t = (t / pi + 1) / 2;
   p = (p * 2 / pi + 1) / 2;
   return vec3(1);
-  // return texture(mTexture, vec2(0.5,0.5) + p / 2 * vec2(cos(t), -sin(t))).rgb;
 }
 
 float beckmann(float m, float c) {
@@ -338,7 +336,6 @@ vec3 getHeadColor(vec3 eye, vec3 ray) {
   result += uni.lightColor * (light + 0.1);
   result += ambientColor;
 
-  //result += vec3(spec);
   return result;
 }
 
@@ -397,8 +394,6 @@ void main() {
 
   if (abs(dist(current)) < eps) {
     vec3 n = getNormal(current);
-    //Cook Torrance
-    //spec = clamp(HN, 0, 1);
     vec3 eyeVec = normalize(eye - current);
     float diffuse = max(0,dot(eyeVec, n));
     float spec;

@@ -2,34 +2,36 @@ import std : exp, writeln;
 import sbylib;
 import frag;
 import rot;
+import util;
 
-// mixin(Register!entryPoint);
-void entryPoint(Project proj, ModuleContext context, Window window) {
+mixin(Register!entryPoint);
+
+@depends("root")
+void entryPoint(ModuleContext context, Window window, ModuleContext[string] contexts) {
     auto tex = new FileTexture("resource/spheremap.jpg");
     context.pushResource(tex);
-    auto bolt = Hanger.create(window, tex);
-    context.pushResource(bolt);
+    auto hanger = Hanger.create(window, tex);
+    context.pushResource(hanger);
 
     Rot q;
     float t = 0;
     
     with (context()) {
         when(Frame).then({
-            with (bolt.fragmentUniform) {
+            with (hanger.fragmentUniform) {
                 rot = q.toMatrix4;
                 time = t;
             }
             t += 0.02;
         });
 
-        when(KeyButton.KeyR.pressed.on(window)).then({
-            proj.reloadAll();
-        });
         when(KeyButton.KeyT.pressed.on(window)).then({
             t = 0;
         });
+        handleContext(context, hanger);
         q.registerEvent(window);
     }
+    contexts[getModuleName()] = context;
 }
 
 enum fragmentSource = q{

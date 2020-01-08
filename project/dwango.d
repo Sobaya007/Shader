@@ -2,9 +2,12 @@ import std : uniform, sqrt, writeln;
 import sbylib;
 import frag;
 import rot;
+import util;
 
-// mixin(Register!entryPoint);
-void entryPoint(Project proj, ModuleContext context, Window window) {
+mixin(Register!entryPoint);
+
+@depends("root")
+void entryPoint(ModuleContext context, Window window, ModuleContext[string] contexts) {
     auto tex = new FileTexture("resource/dwango.png");
     context.pushResource(tex);
 
@@ -46,11 +49,10 @@ void entryPoint(Project proj, ModuleContext context, Window window) {
             }
         });
 
-        when(KeyButton.KeyR.pressed.on(window)).then({
-            proj.reloadAll();
-        });
+        handleContext(context, dwango);
         q.registerEvent(window);
     }
+    contexts[getModuleName()] = context;
 }
 
 enum fragmentSource = q{

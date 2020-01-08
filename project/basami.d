@@ -2,32 +2,34 @@ import std : exp, writeln;
 import sbylib;
 import frag;
 import rot;
+import util;
 
-// mixin(Register!entryPoint);
+mixin(Register!entryPoint);
+
+@depends("root")
 void entryPoint(Project proj, ModuleContext context, Window window) {
     auto tex = new FileTexture("resource/spheremap.jpg");
     context.pushResource(tex);
-    auto bolt = Basami.create(window, tex);
-    context.pushResource(bolt);
+    auto basami = Basami.create(window, tex);
+    context.pushResource(basami);
 
     Rot q;
     float t = 0;
     
     with (context()) {
         when(Frame).then({
-            with (bolt.fragmentUniform) {
+            with (basami.fragmentUniform) {
                 rot = q.toMatrix4;
                 time = t;
             }
             t += 0.2;
+            proj.get!(ModuleContext[string])("contexts")[getModuleName()] = context;
         });
 
-        when(KeyButton.KeyR.pressed.on(window)).then({
-            proj.reloadAll();
-        });
         when(KeyButton.KeyT.pressed.on(window)).then({
             t = 0;
         });
+        handleContext(context, basami);
         q.registerEvent(window);
     }
 }
@@ -156,7 +158,6 @@ float ringOnly(vec3 p) {
 
 float ball(vec3 p) {
   p = scale(p, vec3(0.5,0.5,10) );
-//  p = translate(p, vec3(0,-7,0));
   return length(p) - 1;
 }
 
@@ -166,7 +167,6 @@ float side(vec3 p) {
   p.x = abs(p.x);
   p = translate(p, vec3(1.2,0,0));
   p = rotate(p, vec3(0,0,1), 74 + 8 * (sin(uni.time / 10) + 1));
-  //p = rotate(p, vec3(0,0,1), 76);
   p = translate(p, vec3(0.5, -1.4, 0));
   float sub2 = poll2(p);
   float result = body(p);
@@ -185,7 +185,6 @@ float ring(vec3 p) {
   p.x = abs(p.x);
   p = translate(p, vec3(1.2,0,0));
   p = rotate(p, vec3(0,0,1), 74 + 8 * (sin(uni.time / 10) + 1));
-  //p = rotate(p, vec3(0,0,1), 76);
   p = translate(p, vec3(0.5, -1.4, 0));
   float sub2 = poll2(p);
   float result = r;

@@ -2,34 +2,36 @@ import std : exp, writeln;
 import sbylib;
 import frag;
 import rot;
+import util;
 
-// mixin(Register!entryPoint);
-void entryPoint(Project proj, ModuleContext context, Window window) {
+mixin(Register!entryPoint);
+
+@depends("root")
+void entryPoint(ModuleContext context, Window window, ModuleContext[string] contexts) {
     auto tex = new FileTexture("resource/spheremap.jpg");
     context.pushResource(tex);
-    auto bolt = Katori.create(window, tex);
-    context.pushResource(bolt);
+    auto katori = Katori.create(window, tex);
+    context.pushResource(katori);
 
     Rot q;
     float t = 0;
     
     with (context()) {
         when(Frame).then({
-            with (bolt.fragmentUniform) {
+            with (katori.fragmentUniform) {
                 rot = q.toMatrix4;
                 time = t;
             }
             t += 0.2;
         });
 
-        when(KeyButton.KeyR.pressed.on(window)).then({
-            proj.reloadAll();
-        });
         when(KeyButton.KeyT.pressed.on(window)).then({
             t = 0;
         });
+        handleContext(context, katori);
         q.registerEvent(window);
     }
+    contexts[getModuleName()] = context;
 }
 
 enum fragmentSource = q{
@@ -149,7 +151,6 @@ float body(vec3 p) {
   vec2 q = vec2(mod(len - angle * 0.48, 3)-1, p.y);
   float result = length8(q) - 0.5;
   result = max(result, sub);
-  //result -= noise(p * 300) * 0.01;
   return result;
 }
 
@@ -171,7 +172,6 @@ float distSaucer(vec3 p) {
 }
 
 float dist(vec3 p) {
-//  return body(p);
   return min(body(p), distSaucer(p));
 }
 

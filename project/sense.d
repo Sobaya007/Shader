@@ -2,34 +2,36 @@ import std : exp, writeln;
 import sbylib;
 import frag;
 import rot;
+import util;
 
 mixin(Register!entryPoint);
-void entryPoint(Project proj, ModuleContext context, Window window) {
+
+@depends("root")
+void entryPoint(ModuleContext context, Window window, ModuleContext[string] contexts) {
     auto tex = new FileTexture("resource/sobaya.png");
     context.pushResource(tex);
-    auto bolt = Sense.create(window, tex);
-    context.pushResource(bolt);
+    auto sense = Sense.create(window, tex);
+    context.pushResource(sense);
 
     Rot q;
     float t = 0;
     
     with (context()) {
         when(Frame).then({
-            with (bolt.fragmentUniform) {
+            with (sense.fragmentUniform) {
                 rot = q.toMatrix4;
                 time = t;
             }
             t += 0.2;
         });
 
-        when(KeyButton.KeyR.pressed.on(window)).then({
-            proj.reloadAll();
-        });
         when(KeyButton.KeyT.pressed.on(window)).then({
             t = 0;
         });
+        handleContext(context, sense);
         q.registerEvent(window);
     }
+    contexts[getModuleName()] = context;
 }
 
 enum fragmentSource = q{
@@ -294,14 +296,6 @@ vec2 cubeMap(vec3 current, vec3 vec) {
   return result  / (2 * size) + 1;
 }
 
-vec3 skyMap(vec3 vec) {
-  float t = atan(vec.z, vec.x);
-  float p = asin(vec.y);
-//  t = (t / pi + 1) / 2;
-  p = (p * 2 / pi + 1) / 2;
-  return texture(mTexture, vec2(0.5,0.5) + p / 2 * vec2(cos(t), -sin(t))).rgb;
-}
-
 float beckmann(float m, float c) {
   return exp(-(1 - c * c) / (m * m * c * c)) / (4 * m * m * c * c * c * c);
 }
@@ -375,9 +369,8 @@ void main() {
         break;
     }
   } else {
-    FragColor.rgb = skyMap(ray) * 0.1;
-    FragColor.a = 1;
     FragColor.rgb = vec3(0.6);
+    FragColor.a = 1;
   }
 }
 };
