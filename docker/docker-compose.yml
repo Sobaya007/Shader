@@ -1,0 +1,18 @@
+version: "2.3"
+services:
+  app:
+    build: .
+    command: dub
+    working_dir: /app
+    privileged: true
+    runtime: nvidia
+    entrypoint: /entrypoint.sh
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=display,graphics,utility
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - ..:/app
+      - .dubcache:/root/.dub
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./entrypoint.sh:/entrypoint.sh

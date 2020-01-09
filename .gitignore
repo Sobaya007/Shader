@@ -14,3 +14,4 @@ shader2-test-*
 *.obj
 *.lst
 .cache
+.dubcache
